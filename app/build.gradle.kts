@@ -15,11 +15,20 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+//        现代手机绝大多数是 arm64-v8a。只打这一个包体积会缩小 50% 以上
+        ndk {
+            abiFilters.add("arm64-v8a")
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // 1. 启用代码混淆和压缩
+            isMinifyEnabled = true
+            // 2. 启用资源压缩（去掉未使用的图片、布局等）
+            isShrinkResources = true
+            // 默认混淆规则
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

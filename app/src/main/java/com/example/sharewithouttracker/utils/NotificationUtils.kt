@@ -5,6 +5,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.example.sharewithouttracker.TransparentClipboardActivity
 
@@ -40,18 +43,10 @@ fun showPersistentNotification(context: Context) {
 // 在原有文件末尾追加以下函数
 
 fun showResultNotification(context: Context, message: String) {
-    val channelId = "clipboard_result_channel"
-    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-    val channel = NotificationChannel(channelId, "处理结果通知", NotificationManager.IMPORTANCE_HIGH)
-    notificationManager.createNotificationChannel(channel)
-
-    val notification = NotificationCompat.Builder(context, channelId)
-        .setSmallIcon(android.R.drawable.ic_menu_info_details)
-        .setContentTitle("ShareWithoutTracker")
-        .setContentText(message)
-        .setAutoCancel(true) // 点击或稍后自动消失
-        .build()
-
-    notificationManager.notify(System.currentTimeMillis().toInt(), notification) // 使用动态ID防止覆盖多条结果
+    // 结果提示改为 Toast（不再使用通知栏 Notification）。
+    // 使用 applicationContext 避免持有 Activity 引用。
+    val safeContext = context.applicationContext
+    Handler(Looper.getMainLooper()).post {
+        Toast.makeText(safeContext, message, Toast.LENGTH_SHORT).show()
+    }
 }
