@@ -26,8 +26,6 @@ class TransparentClipboardActivity : Activity() {
         const val EXTRA_SHARE_MODE = "extra_share_mode"
         const val MODE_DIRECT_SHARE = 0
         const val MODE_COMMENT_BEFORE_SHARE = 1
-
-        private const val EXTRA_USER_COMMENT = "extra_user_comment"
     }
 
     // 【修改】改为可空的 WebView，并且不再一启动就初始化
@@ -57,9 +55,8 @@ class TransparentClipboardActivity : Activity() {
             }
 
             isProcessing = true
-            val comment = intent?.getStringExtra(EXTRA_USER_COMMENT)
             CoroutineScope(Dispatchers.Main).launch {
-                processClipboardAndSend(comment)
+                processClipboardAndSend(null)
             }
         }
     }
@@ -78,10 +75,10 @@ class TransparentClipboardActivity : Activity() {
             }
             .setPositiveButton("分享") { _, _ ->
                 val comment = input.text?.toString()?.trim().orEmpty()
-                intent.putExtra(EXTRA_USER_COMMENT, comment)
-                // 让 onWindowFocusChanged 继续走发送逻辑
-                isProcessing = false
-                isCommentDialogShown = true
+                isProcessing = true
+                CoroutineScope(Dispatchers.Main).launch {
+                    processClipboardAndSend(comment)
+                }
             }
             .setOnCancelListener {
                 finish()

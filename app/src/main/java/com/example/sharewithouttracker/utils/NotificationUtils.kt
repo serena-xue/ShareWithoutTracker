@@ -44,14 +44,9 @@ fun showPersistentNotification(context: Context) {
 
     val notification = NotificationCompat.Builder(context, channelId)
         .setSmallIcon(android.R.drawable.ic_menu_share)
-        .setContentTitle("ShareWithoutTracker")
+        .setContentTitle("点击此处分享")
         .setContentText("")
         .setContentIntent(sharePendingIntent)
-        .addAction(
-            android.R.drawable.ic_menu_share,
-            "分享",
-            sharePendingIntent
-        )
         .addAction(
             android.R.drawable.ic_menu_edit,
             "评论并分享",
