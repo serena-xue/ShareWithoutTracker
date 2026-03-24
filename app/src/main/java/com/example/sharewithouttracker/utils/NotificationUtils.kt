@@ -18,22 +18,45 @@ fun showPersistentNotification(context: Context) {
     val channel = NotificationChannel(channelId, "剪贴板触发器", NotificationManager.IMPORTANCE_LOW)
     notificationManager.createNotificationChannel(channel)
 
-    val intent = Intent(context, TransparentClipboardActivity::class.java).apply {
+    val shareIntent = Intent(context, TransparentClipboardActivity::class.java).apply {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        putExtra(TransparentClipboardActivity.EXTRA_SHARE_MODE, TransparentClipboardActivity.MODE_DIRECT_SHARE)
     }
 
-    val pendingIntent = PendingIntent.getActivity(
+    val sharePendingIntent = PendingIntent.getActivity(
         context,
-        0,
-        intent,
+        10020,
+        shareIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val commentShareIntent = Intent(context, TransparentClipboardActivity::class.java).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        putExtra(TransparentClipboardActivity.EXTRA_SHARE_MODE, TransparentClipboardActivity.MODE_COMMENT_BEFORE_SHARE)
+    }
+
+    val commentSharePendingIntent = PendingIntent.getActivity(
+        context,
+        10021,
+        commentShareIntent,
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
     val notification = NotificationCompat.Builder(context, channelId)
         .setSmallIcon(android.R.drawable.ic_menu_share)
         .setContentTitle("ShareWithoutTracker")
-        .setContentText("点击此处获取剪贴板并分享")
-        .setContentIntent(pendingIntent)
+        .setContentText("")
+        .setContentIntent(sharePendingIntent)
+        .addAction(
+            android.R.drawable.ic_menu_share,
+            "分享",
+            sharePendingIntent
+        )
+        .addAction(
+            android.R.drawable.ic_menu_edit,
+            "评论并分享",
+            commentSharePendingIntent
+        )
         .setOngoing(true) // 设为常驻通知
         .build()
 

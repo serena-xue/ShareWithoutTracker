@@ -26,6 +26,12 @@ class BilibiliCleaner : LinkCleanerStrategy {
     }
 
     override suspend fun getTitle(context: Context, text: String, webView: WebView?): String? {
-        return LinkUtils.extractTitleFromText(text)
+        val rawTitle = LinkUtils.extractTitleFromText(text)
+
+        val cleanedTitle = rawTitle
+            .removePrefix("【")
+            .removeSuffix("-哔哩哔哩】")
+
+        return cleanedTitle
     }
 }

@@ -1,10 +1,14 @@
 package com.example.sharewithouttracker
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ClipboardManager
 import android.content.Context
+import android.text.InputType
+import android.text.TextUtils
 import android.os.Bundle
 import android.webkit.WebView
+import android.widget.EditText
 import android.widget.FrameLayout
 import com.example.sharewithouttracker.cleaner.LinkCleanerManager
 import com.example.sharewithouttracker.utils.showResultNotification
@@ -18,15 +22,26 @@ import okhttp3.Request
 
 class TransparentClipboardActivity : Activity() {
 
+    companion object {
+        const val EXTRA_SHARE_MODE = "extra_share_mode"
+        const val MODE_DIRECT_SHARE = 0
+        const val MODE_COMMENT_BEFORE_SHARE = 1
+
+        private const val EXTRA_USER_COMMENT = "extra_user_comment"
+    }
+
     // 【修改】改为可空的 WebView，并且不再一启动就初始化
     private var hiddenWebView: WebView? = null
     private lateinit var rootLayout: FrameLayout
 
     private var isProcessing = false
+    private var isCommentDialogShown = false
+    private var shareMode: Int = MODE_DIRECT_SHARE
     private val httpClient = OkHttpClient()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        shareMode = intent?.getIntExtra(EXTRA_SHARE_MODE, MODE_DIRECT_SHARE) ?: MODE_DIRECT_SHARE
         // 初始状态下只创建一个极度轻量的空 FrameLayout
         rootLayout = FrameLayout(this)
         setContentView(rootLayout)
@@ -35,14 +50,46 @@ class TransparentClipboardActivity : Activity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isProcessing) {
+            if (shareMode == MODE_COMMENT_BEFORE_SHARE && !isCommentDialogShown) {
+                isCommentDialogShown = true
+                showCommentDialog()
+                return
+            }
+
             isProcessing = true
+            val comment = intent?.getStringExtra(EXTRA_USER_COMMENT)
             CoroutineScope(Dispatchers.Main).launch {
-                processClipboardAndSend()
+                processClipboardAndSend(comment)
             }
         }
     }
 
-    private suspend fun processClipboardAndSend() {
+    private fun showCommentDialog() {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            hint = "请输入评论"
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("评论并分享")
+            .setView(input)
+            .setNegativeButton("取消") { _, _ ->
+                finish()
+            }
+            .setPositiveButton("分享") { _, _ ->
+                val comment = input.text?.toString()?.trim().orEmpty()
+                intent.putExtra(EXTRA_USER_COMMENT, comment)
+                // 让 onWindowFocusChanged 继续走发送逻辑
+                isProcessing = false
+                isCommentDialogShown = true
+            }
+            .setOnCancelListener {
+                finish()
+            }
+            .show()
+    }
+
+    private suspend fun processClipboardAndSend(comment: String?) {
         val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         if (!clipboard.hasPrimaryClip()) return
 
@@ -80,7 +127,7 @@ class TransparentClipboardActivity : Activity() {
 
                 if (processResult != null) {
                     val (source, cleanedUrl, title) = processResult
-                    sendToTelegramSync(appContext, title, cleanedUrl, source)
+                    sendToTelegramSync(appContext, title, cleanedUrl, source, comment)
                 } else {
                     withContext(Dispatchers.Main) {
                         showResultNotification(appContext, "链接解析失败")
@@ -113,7 +160,7 @@ class TransparentClipboardActivity : Activity() {
         hiddenWebView = null
     }
 
-    private fun sendToTelegramSync(appContext: Context, title: String?, url: String?, source: String?) {
+    private fun sendToTelegramSync(appContext: Context, title: String?, url: String?, source: String?, comment: String?) {
         val prefs = appContext.getSharedPreferences("app_settings", MODE_PRIVATE)
         val botToken = prefs.getString("tg_bot_token", "") ?: ""
         val chatId = prefs.getString("tg_chat_id", "") ?: ""
@@ -125,11 +172,21 @@ class TransparentClipboardActivity : Activity() {
             return
         }
 
-        val htmlText = "<a href=\"$url\">[$source] $title</a>"
+        val safeUrl = TextUtils.htmlEncode(url ?: "")
+        val safeSource = TextUtils.htmlEncode(source ?: "")
+        val safeTitle = TextUtils.htmlEncode(title ?: "")
+        val baseHtmlText = "<a href=\"$safeUrl\">[$safeSource] $safeTitle</a>"
+
+        val finalHtmlText = if (!comment.isNullOrBlank()) {
+            val safeComment = TextUtils.htmlEncode(comment.trim())
+            "$baseHtmlText\n[眼镜鹅评论] $safeComment"
+        } else {
+            baseHtmlText
+        }
         val apiUrl = "https://api.telegram.org/bot$botToken/sendMessage"
         val httpUrl = apiUrl.toHttpUrlOrNull()?.newBuilder()
             ?.addQueryParameter("chat_id", chatId)
-            ?.addQueryParameter("text", htmlText)
+            ?.addQueryParameter("text", finalHtmlText)
             ?.addQueryParameter("parse_mode", "HTML")
             ?.build() ?: return
 
