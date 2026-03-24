@@ -6,4 +6,8 @@
     </style>
 
     <style name="Theme.ShareWithoutTracker" parent="Base.Theme.ShareWithoutTracker" />
+
+    <style name="Theme.ShareWithoutTracker.Dialog" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:windowSoftInputMode">stateVisible|adjustResize</item>
+    </style>
 </resources>

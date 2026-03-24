@@ -21,7 +21,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 此处假定你已创建 activity_main.xml 并包含以下 ID 的控件
         setContentView(R.layout.activity_main)
 
         tvDebugClipboard = findViewById(R.id.tv_debug_clipboard) // 新增绑定

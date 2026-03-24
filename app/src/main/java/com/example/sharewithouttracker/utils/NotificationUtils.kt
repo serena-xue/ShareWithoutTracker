@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import com.example.sharewithouttracker.CommentShareActivity
 import com.example.sharewithouttracker.TransparentClipboardActivity
 
 fun showPersistentNotification(context: Context) {
@@ -30,9 +31,8 @@ fun showPersistentNotification(context: Context) {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    val commentShareIntent = Intent(context, TransparentClipboardActivity::class.java).apply {
+    val commentShareIntent = Intent(context, CommentShareActivity::class.java).apply {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        putExtra(TransparentClipboardActivity.EXTRA_SHARE_MODE, TransparentClipboardActivity.MODE_COMMENT_BEFORE_SHARE)
     }
 
     val commentSharePendingIntent = PendingIntent.getActivity(
