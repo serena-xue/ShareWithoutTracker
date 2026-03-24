@@ -3,6 +3,8 @@
     <string name="config_title">Telegram Bot 配置</string>
     <string name="hint_bot_token">Bot Token (例如: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11)</string>
     <string name="hint_chat_id">Chat ID (你的 Telegram ID)</string>
+    <string name="hint_comment_prefix">评论前缀（默认：评论）</string>
     <string name="action_save">保存配置</string>
+    <string name="zhihu_fetch_title">知乎：获取标题（不稳定可关闭）</string>
     <string name="instruction_text">使用说明：\n1. 在社交媒体点击分享。\n2. 选择“复制链接”。\n3. 在系统通知中点击 ShareWithoutTracker 即可发送。</string>
 </resources>

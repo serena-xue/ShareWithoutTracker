@@ -6,10 +6,12 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
+import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import com.example.sharewithouttracker.cleaner.LinkCleanerManager
+import com.example.sharewithouttracker.cleaner.ZhihuCleaner
 import com.example.sharewithouttracker.utils.showResultNotification
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -36,8 +38,8 @@ class CommentShareActivity : AppCompatActivity() {
     }
 
     private fun showCommentDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_comment, null)
-        val input = dialogView.findViewById<TextInputEditText>(R.id.commentEditText)
+        val dialogView: View = layoutInflater.inflate(R.layout.dialog_comment, null)
+        val input: TextInputEditText = dialogView.findViewById(R.id.commentEditText)
 
         val dialog = MaterialAlertDialogBuilder(this)
             .setTitle("评论并分享")
@@ -89,7 +91,11 @@ class CommentShareActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
-                if (strategy.requiresWebView) {
+                val prefs = appContext.getSharedPreferences("app_settings", MODE_PRIVATE)
+                val zhihuFetchTitleEnabled = prefs.getBoolean("zhihu_fetch_title_enabled", true)
+                val needsWebView = strategy.requiresWebView && !(strategy is ZhihuCleaner && !zhihuFetchTitleEnabled)
+
+                if (needsWebView) {
                     // 需要 WebView（知乎）：交给 TransparentClipboardActivity 去显示它的处理覆盖层并取 title。
                     val intent = Intent(this@CommentShareActivity, TransparentClipboardActivity::class.java).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -147,9 +153,11 @@ class CommentShareActivity : AppCompatActivity() {
         val safeTitle = TextUtils.htmlEncode(title ?: "")
         val baseHtmlText = "<a href=\"$safeUrl\">[$safeSource] $safeTitle</a>"
 
+        val commentPrefix = (prefs.getString("comment_prefix", "评论") ?: "评论").trim().ifBlank { "评论" }
+
         val finalHtmlText = if (!comment.isNullOrBlank()) {
             val safeComment = TextUtils.htmlEncode(comment.trim())
-            "$baseHtmlText\n[眼镜鹅评论] $safeComment"
+            "$baseHtmlText\n[${TextUtils.htmlEncode(commentPrefix)}] $safeComment"
         } else {
             baseHtmlText
         }

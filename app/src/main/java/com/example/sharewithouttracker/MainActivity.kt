@@ -7,50 +7,55 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import com.google.android.material.switchmaterial.SwitchMaterial
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.sharewithouttracker.utils.showPersistentNotification
-import android.widget.TextView
+import com.google.android.material.textfield.TextInputEditText
 
 class MainActivity : AppCompatActivity() {
 
+    private val PREFS_NAME = "app_settings"
+    private val KEY_ZHIHU_FETCH_TITLE = "zhihu_fetch_title_enabled"
+    private val KEY_COMMENT_PREFIX = "comment_prefix"
+
     private val REQUEST_CODE_POST_NOTIFICATIONS = 101
-    private lateinit var tvDebugClipboard: TextView // 新增
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        tvDebugClipboard = findViewById(R.id.tv_debug_clipboard) // 新增绑定
-
         val etBotToken = findViewById<EditText>(R.id.et_bot_token)
         val etChatId = findViewById<EditText>(R.id.et_chat_id)
+        val swZhihuFetchTitle = findViewById<SwitchMaterial>(R.id.sw_zhihu_fetch_title)
+        val etCommentPrefix = findViewById<TextInputEditText>(R.id.et_comment_prefix)
         val btnSave = findViewById<Button>(R.id.btn_save)
 
-        val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         etBotToken.setText(prefs.getString("tg_bot_token", ""))
         etChatId.setText(prefs.getString("tg_chat_id", ""))
+        swZhihuFetchTitle.isChecked = prefs.getBoolean(KEY_ZHIHU_FETCH_TITLE, true)
+        etCommentPrefix.setText(prefs.getString(KEY_COMMENT_PREFIX, "评论") ?: "评论")
+
+        swZhihuFetchTitle.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(KEY_ZHIHU_FETCH_TITLE, isChecked).apply()
+        }
 
         btnSave.setOnClickListener {
+            val commentPrefix = etCommentPrefix.text?.toString()?.trim().orEmpty()
             prefs.edit().apply {
                 putString("tg_bot_token", etBotToken.text.toString().trim())
                 putString("tg_chat_id", etChatId.text.toString().trim())
+                putBoolean(KEY_ZHIHU_FETCH_TITLE, swZhihuFetchTitle.isChecked)
+                putString(KEY_COMMENT_PREFIX, if (commentPrefix.isBlank()) "评论" else commentPrefix)
                 apply()
             }
             Toast.makeText(this, "配置已保存", Toast.LENGTH_SHORT).show()
         }
 
         checkNotificationPermission()
-    }
-
-    // 新增生命周期回调：每次回到界面时刷新调试信息
-    override fun onResume() {
-        super.onResume()
-        val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-        val debugInfo = prefs.getString("debug_clipboard_data", "暂无数据")
-        tvDebugClipboard.text = debugInfo
     }
 
     private fun checkNotificationPermission() {

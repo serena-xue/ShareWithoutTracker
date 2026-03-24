@@ -16,6 +16,7 @@ import android.widget.LinearLayout
 import android.widget.FrameLayout
 import android.widget.TextView
 import com.example.sharewithouttracker.cleaner.LinkCleanerManager
+import com.example.sharewithouttracker.cleaner.ZhihuCleaner
 import com.example.sharewithouttracker.utils.showResultNotification
 import com.google.android.material.color.MaterialColors
 import kotlinx.coroutines.CoroutineScope
@@ -260,8 +261,12 @@ class TransparentClipboardActivity : Activity() {
             return
         }
 
+        val prefs = appContext.getSharedPreferences("app_settings", MODE_PRIVATE)
+        val zhihuFetchTitleEnabled = prefs.getBoolean("zhihu_fetch_title_enabled", true)
+        val needsWebView = strategy.requiresWebView && !(strategy is ZhihuCleaner && !zhihuFetchTitleEnabled)
+
         // 直接分享：不需要 WebView 的场景，在拿到剪贴板后就立刻结束空白窗口。
-        if (!strategy.requiresWebView) {
+        if (!needsWebView) {
             CoroutineScope(Dispatchers.IO).launch {
                 val processResult = cleanerManager.processText(appContext, text, strategy, null)
                 if (processResult != null) {
@@ -275,7 +280,7 @@ class TransparentClipboardActivity : Activity() {
             return
         }
 
-        // 直接分享 + 知乎：WebView 只保留到 getTitle() 结束；并在此期间显示“处理中……”信息条。
+        // 需要 WebView（知乎）：WebView 只保留到 getTitle() 结束；并在此期间显示“处理中……”信息条。
         val cleanedUrl = withContext(Dispatchers.IO) { strategy.clean(appContext, text) }
         val source = withContext(Dispatchers.IO) { strategy.getSource(appContext, text) }
 
@@ -326,9 +331,11 @@ class TransparentClipboardActivity : Activity() {
         val safeTitle = TextUtils.htmlEncode(title ?: "")
         val baseHtmlText = "<a href=\"$safeUrl\">[$safeSource] $safeTitle</a>"
 
+        val commentPrefix = (prefs.getString("comment_prefix", "评论") ?: "评论").trim().ifBlank { "评论" }
+
         val finalHtmlText = if (!comment.isNullOrBlank()) {
             val safeComment = TextUtils.htmlEncode(comment.trim())
-            "$baseHtmlText\n[眼镜鹅评论] $safeComment"
+            "$baseHtmlText\n[${TextUtils.htmlEncode(commentPrefix)}] $safeComment"
         } else {
             baseHtmlText
         }

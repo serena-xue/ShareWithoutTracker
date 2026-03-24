@@ -18,10 +18,20 @@ class XiaohongshuCleaner : LinkCleanerStrategy {
         val url = extractUrl(text) ?: return null
         val uri = resolveShortUrl(url, "xhslink.com") ?: return null
 
+        // 1. 提取关键参数
+        val noteId = uri.getQueryParameter("noteId")
         val xsecToken = uri.getQueryParameter("xsec_token")
 
-        val builder = uri.buildUpon().clearQuery()
+        // 2. 重新构建 URI
+        val builder = uri.buildUpon()
+            .clearQuery() // 清理所有旧的查询参数
 
+        // 3. 修改路径：将 /404 替换为 /explore/{noteId}
+        if (!noteId.isNullOrEmpty()) {
+            builder.encodedPath("/explore/$noteId")
+        }
+
+        // 4. 重新添加 xsec_token
         if (!xsecToken.isNullOrEmpty()) {
             builder.appendQueryParameter("xsec_token", xsecToken)
         }

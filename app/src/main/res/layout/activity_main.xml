@@ -41,6 +41,28 @@
             android:maxLines="1"/>
     </com.google.android.material.textfield.TextInputLayout>
 
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/sw_zhihu_fetch_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        android:text="@string/zhihu_fetch_title"
+        android:layout_marginBottom="24dp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/hint_comment_prefix"
+        android:layout_marginBottom="24dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_comment_prefix"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+
     <Button
         android:id="@+id/btn_save"
         android:layout_width="match_parent"
@@ -55,35 +77,5 @@
         android:textColor="#888888"
         android:textSize="14sp"
         android:layout_marginTop="32dp"/>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="16dp"
-        android:background="#CCCCCC"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="调试信息：本次获取的前10条剪贴板内容"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp"/>
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#F5F5F5"
-        android:padding="8dp">
-
-        <TextView
-            android:id="@+id/tv_debug_clipboard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textColor="#333333"
-            android:text="暂无数据"/>
-    </ScrollView>
 
 </LinearLayout>

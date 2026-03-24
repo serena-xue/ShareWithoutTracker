@@ -17,6 +17,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.net.URLDecoder
 import kotlin.coroutines.resume
+import android.webkit.CookieManager
 
 class ZhihuCleaner : LinkCleanerStrategy {
     // 【新增】明确声明知乎需要 WebView
@@ -39,6 +40,10 @@ class ZhihuCleaner : LinkCleanerStrategy {
         text: String,
         webView: WebView?
     ): String? {
+        val prefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        val fetchTitleEnabled = prefs.getBoolean("zhihu_fetch_title_enabled", true)
+        if (!fetchTitleEnabled) return "分享链接"
+
         val url = text.substringBefore("?share_code")
 
         if (webView == null) return "分享链接"
@@ -52,7 +57,7 @@ class ZhihuCleaner : LinkCleanerStrategy {
                     settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                     settings.userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-                    // 【性能优化核心 1】禁用网络图片加载，极大提升网页加载速度并节省内存
+                    // 禁用网络图片加载，提升网页加载速度并节省内存
                     settings.blockNetworkImage = true
                     settings.loadsImagesAutomatically = false
 
@@ -121,16 +126,21 @@ class ZhihuCleaner : LinkCleanerStrategy {
                         }
                     }
 
-                    // 保留你的防 403 伪装头
+                    Log.d("DebugTag", url)
+
                     val extraHeaders = mapOf(
                         "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                         "Accept-Language" to "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
                         "Cache-Control" to "max-age=0",
+                        "Referer" to "https://www.zhihu.com/",
                         "Connection" to "keep-alive",
                         "Upgrade-Insecure-Requests" to "1",
+                        "sec-ch-ua-platform" to "\"Chromium\";v=\"146\", \"Not-A.Brand\";v=\"24\", \"Microsoft Edge\";v=\"146\"",
+                        "sec-ch-ua" to "\"Windows\"",
+                        "sec-ch-ua-mobile" to "?0",
                         "Sec-Fetch-Dest" to "document",
                         "Sec-Fetch-Mode" to "navigate",
-                        "Sec-Fetch-Site" to "none",
+                        "Sec-Fetch-Site" to "same-origin",
                         "Sec-Fetch-User" to "?1"
                     )
                     webView.loadUrl(url, extraHeaders)
