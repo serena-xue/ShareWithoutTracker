@@ -6,6 +6,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
@@ -22,6 +23,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.text.htmlEncode
 
 class CommentShareActivity : AppCompatActivity() {
 
@@ -148,16 +150,16 @@ class CommentShareActivity : AppCompatActivity() {
             return
         }
 
-        val safeUrl = TextUtils.htmlEncode(url ?: "")
-        val safeSource = TextUtils.htmlEncode(source ?: "")
-        val safeTitle = TextUtils.htmlEncode(title ?: "")
+        val safeUrl = (url ?: "").htmlEncode()
+        val safeSource = (source ?: "").htmlEncode()
+        val safeTitle = (title ?: "").htmlEncode()
         val baseHtmlText = "<a href=\"$safeUrl\">[$safeSource] $safeTitle</a>"
 
         val commentPrefix = (prefs.getString("comment_prefix", "评论") ?: "评论").trim().ifBlank { "评论" }
 
         val finalHtmlText = if (!comment.isNullOrBlank()) {
-            val safeComment = TextUtils.htmlEncode(comment.trim())
-            "$baseHtmlText\n[${TextUtils.htmlEncode(commentPrefix)}] $safeComment"
+            val safeComment = comment.trim().htmlEncode()
+            "$baseHtmlText\n[${commentPrefix.htmlEncode()}] $safeComment"
         } else {
             baseHtmlText
         }
@@ -170,6 +172,7 @@ class CommentShareActivity : AppCompatActivity() {
             ?.build() ?: return
 
         val request = Request.Builder().url(httpUrl).get().build()
+        Log.d("DebugTag", "request: $request")
         try {
             httpClient.newCall(request).execute().use { response ->
                 val msg = if (response.isSuccessful) "消息分享成功" else "消息分享失败"
