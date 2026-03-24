@@ -42,6 +42,17 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    packaging {
+        resources {
+            // 排除整个 driver 文件夹及其内容
+            excludes.add("driver/**")
+            // 顺便排除其他常见的无用描述文件
+            excludes.add("META-INF/DEPENDENCIES")
+            excludes.add("META-INF/LICENSE*")
+            excludes.add("META-INF/NOTICE*")
+        }
+    }
+
 }
 
 dependencies {
@@ -58,12 +69,11 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // 测试依赖
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+//    testImplementation("junit:junit:4.13.2")
+//    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+//    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     implementation("org.jsoup:jsoup:1.22.1")
-    implementation("com.microsoft.playwright:playwright:1.58.0")
 
 //    implementation("androidx.core:core-ktx:1.13.1")
 //    implementation(libs.androidx.appcompat)
